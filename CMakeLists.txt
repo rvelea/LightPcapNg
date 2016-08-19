@@ -10,6 +10,7 @@ add_library (light_pcapng SHARED
     src/light_manipulate.c
     src/light_internal.c
     src/light_alloc.c
+    src/light_advanced.c
     )
 
 add_library (light_pcapng_static STATIC
@@ -20,4 +21,5 @@ add_library (light_pcapng_static STATIC
     src/light_manipulate.c
     src/light_internal.c
     src/light_alloc.c
+    src/light_advanced.c
     )

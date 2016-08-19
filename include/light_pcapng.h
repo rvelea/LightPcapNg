@@ -43,6 +43,7 @@ extern "C" {
 
 #define LIGHT_SUCCESS           0
 #define LIGHT_INVALID_SECTION  -1
+#define LIGHT_OUT_OF_MEMORY    -2
 
 /////////////////////////////// STANDARD PCAPNG STRUCTURES & FUNCTIONS ///////////////////////////////
 
@@ -55,8 +56,12 @@ light_pcapng light_read_from_memory(const uint32_t *memory, size_t size);
 uint32_t *light_pcapng_to_memory(const light_pcapng pcapng, size_t *size);
 int light_pcapng_to_file(const char *file_name, const light_pcapng pcapng);
 void light_pcapng_release(light_pcapng pcapng);
+
 // For Debugging Purposes
 char *light_pcapng_to_string(light_pcapng pcapng);
+uint32_t light_get_block_count(const light_pcapng pcapng);
+light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index);
+void light_pcapng_historgram(const light_pcapng pcapng, uint32_t ***hist, size_t *type_count, size_t **count);
 
 // Manipulation Functions
 int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, int copy);
@@ -67,6 +72,16 @@ light_option light_alloc_option(uint16_t option_length);
 light_pcapng light_alloc_block(uint32_t block_body_lengh);
 void light_free_option(light_option option);
 void light_free_block(light_pcapng pcapng);
+
+// Advanced Interaction
+typedef enum {
+	LIGHT_FEATURE_BITMASK = 0,
+	LIGHT_FEATURE_BYTE = 1,
+	LIGHT_FEATURE_SHORT = 2,
+	LIGHT_FEATURE_FLOAT = 4,
+} light_feature_t;
+int light_section_feature_extraction(const light_pcapng section, int (*extractor)(const light_pcapng, void *, size_t),
+		void **feature_vector, const size_t feature_vector_size, const light_feature_t type);
 
 /////////////////////////////// CONTINUOUS MEMORY BLOCK STRUCTURES & FUNCTIONS ///////////////////////////////
 

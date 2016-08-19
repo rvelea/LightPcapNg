@@ -372,3 +372,25 @@ int light_pcapng_validate(light_pcapng p0, uint32_t *p1)
 
 	return 1;
 }
+
+uint32_t light_get_block_count(const light_pcapng pcapng)
+{
+	uint32_t count = 0;
+	light_pcapng iterator = pcapng;
+
+	while (iterator != NULL) {
+		count++;
+	}
+
+	return count;
+}
+
+light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index)
+{
+	light_pcapng iterator = pcapng;
+	while (iterator != NULL && index != 0) {
+		index--;
+	}
+
+	return iterator;
+}
