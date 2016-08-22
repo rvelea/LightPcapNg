@@ -394,3 +394,45 @@ light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index)
 
 	return iterator;
 }
+
+void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
+		light_pair **hist, size_t *size, size_t *rejected)
+{
+	light_pcapng iterator = pcapng;
+	size_t dropped = 0;
+	size_t sz = 0;
+	size_t i;
+
+	*hist = NULL;
+
+	while (iterator != NULL) {
+		uint32_t key = key_master(iterator);
+		if (key != LIGHT_KEY_REJECTED) {
+			int found = 0;
+			for (i = 0; i < sz; ++i) {
+				if ((*hist)[i].key == key) {
+					found = 1;
+					(*hist)[i].val++;
+					break;
+				}
+			}
+
+			if (found == 0) {
+				*hist = realloc(*hist, (sz + 1) * sizeof(light_pair));
+				(*hist)[sz].key = key;
+				(*hist)[sz].val = 1;
+				sz++;
+			}
+		}
+		else {
+			dropped++;
+		}
+		iterator = iterator->next_block;
+	}
+
+	*size = sz;
+
+	if (rejected != NULL)
+		*rejected = dropped;
+}
+

@@ -36,10 +36,13 @@ extern "C" {
 #define LIGHT_SIMPLE_PACKET_BLOCK   0x00000003
 
 #define LIGHT_CUSTOM_DATA_BLOCK     0xB16B00B5
+#define LIGHT_UNKNOWN_DATA_BLOCK    0xDEADBEEF
 
 #define BYTE_ORDER_MAGIC            0x1A2B3C4D
 
-/////////////////////////////// ////////////ERROR CODES //////////////////////////////////////////////
+#define LIGHT_KEY_REJECTED          0xFFFFFFFF
+
+/////////////////////////////// /////////// ERROR CODES //////////////////////////////////////////////
 
 #define LIGHT_SUCCESS           0
 #define LIGHT_INVALID_SECTION  -1
@@ -49,6 +52,11 @@ extern "C" {
 
 typedef struct _light_pcapng *light_pcapng;
 typedef struct _light_option *light_option;
+
+typedef struct _light_pair {
+	uint32_t key;
+	uint32_t val;
+} light_pair;
 
 // Read/Write Functions
 light_pcapng light_read_from_path(const char *file_name);
@@ -61,7 +69,8 @@ void light_pcapng_release(light_pcapng pcapng);
 char *light_pcapng_to_string(light_pcapng pcapng);
 uint32_t light_get_block_count(const light_pcapng pcapng);
 light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index);
-void light_pcapng_historgram(const light_pcapng pcapng, uint32_t ***hist, size_t *type_count, size_t **count);
+void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
+		light_pair **hist, size_t *size, size_t *rejected);
 
 // Manipulation Functions
 int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, int copy);
