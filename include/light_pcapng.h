@@ -69,6 +69,7 @@ void light_pcapng_release(light_pcapng pcapng);
 char *light_pcapng_to_string(light_pcapng pcapng);
 uint32_t light_get_block_count(const light_pcapng pcapng);
 light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index);
+size_t light_get_size(const light_pcapng pcapng);
 void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
 		light_pair **hist, size_t *size, size_t *rejected);
 
