@@ -41,8 +41,8 @@ extern "C" {
 // XXX: Warning: I should not use these macros with functions!!! Undefined for Release.
 
 #define DCHECK_INT(x, y, other)	do { \
-		int x_ret = (int)x; \
-		int y_ret = (int)y; \
+		int x_ret = (int)(x); \
+		int y_ret = (int)(y); \
 		if (x_ret <= y_ret) { \
 			fprintf(stderr, "ERROR at %s::%s::%d: %d <= %d\n", \
 					__FILE__, __FUNCTION__, __LINE__, x_ret, y_ret); \
@@ -51,8 +51,8 @@ extern "C" {
 	} while (0)
 
 #define DCHECK_ASSERT(x, y, other)	do { \
-		int x_ret = (int)x; \
-		int y_ret = (int)y; \
+		int x_ret = (int)(x); \
+		int y_ret = (int)(y); \
 		if (x_ret != y_ret) { \
 			fprintf(stderr, "ERROR at %s::%s::%d: %d != %d\n", \
 					__FILE__, __FUNCTION__, __LINE__, x_ret, y_ret); \
@@ -60,9 +60,20 @@ extern "C" {
 		} \
 	} while (0)
 
+#define DCHECK_NULLP(x, other)	do { \
+		void *x_ret = (void *)(x); \
+		if (x_ret == NULL) { \
+			fprintf(stderr, "NULL pointer ERROR at %s::%s::%d\n", \
+					__FILE__, __FUNCTION__, __LINE__); \
+			other; \
+		} \
+	} while (0)
+
 #define PCAPNG_WARNING(symbol) fprintf(stderr, "Warning at: %s::%s::%d, %s\n", __FILE__, __FUNCTION__, __LINE__, #symbol)
 #define PCAPNG_ERROR(symbol)   fprintf(stderr, "Error at: %s::%s::%d, %s\n", __FILE__, __FUNCTION__, __LINE__, #symbol)
 
+#define PCAPNG_ATTRIBUTE_SLOW __attribute__((warning ("slow for large traces")))
+#define PCAPNG_ATTRIBUTE_DEPRECATED __attribute__((warning ("deprecated function")))
 #define PCAPNG_ATTRIBUTE_UNTESTED __attribute__((warning ("unit test required")))
 #define PCAPNG_ATTRIBUTE_REFACTOR __attribute__((warning ("should be refactored")))
 

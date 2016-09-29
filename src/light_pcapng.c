@@ -78,8 +78,8 @@ static struct _light_option *__parse_options(uint32_t **memory, const ssize_t ma
 	}
 }
 
-// Parse memory and allocate _light_pcapng array.
-static void __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memory, const size_t size)
+// Recursively parse memory and allocate _light_pcapng array.
+PCAPNG_ATTRIBUTE_DEPRECATED static void __parse_mem_copy_rec(struct _light_pcapng **iter, const uint32_t *memory, const size_t size)
 {
 	const uint32_t *local_data = (const uint32_t *)(memory);
 	struct _light_pcapng *current = NULL;
@@ -89,6 +89,8 @@ static void __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memory
 		return;
 
 	current = calloc(1, sizeof(struct _light_pcapng));
+	DCHECK_NULLP(current, return);
+
 	current->block_type = *local_data++;
 	current->block_total_lenght = *local_data++;
 	DCHECK_INT(((current->block_total_lenght % 4) == 0), 0, light_stop);
@@ -233,11 +235,189 @@ static void __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memory
 	current->next_block = NULL;
 	bytes_read = current->block_total_lenght;
 
-	__parse_mem_copy(&current->next_block, memory + (bytes_read / sizeof(*memory)), size - bytes_read);
+	__parse_mem_copy_rec(&current->next_block, memory + (bytes_read / sizeof(*memory)), size - bytes_read);
 
 	*iter = current;
 
 	return;
+}
+
+// Parse memory and allocate _light_pcapng array.
+static size_t __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memory, const size_t size)
+{
+	struct _light_pcapng *current = NULL;
+	size_t bytes_read = 0;
+	size_t remaining = size;
+	size_t block_count = 0;
+
+	*iter = NULL;
+
+	while (remaining > 12) {
+		const uint32_t *local_data = (const uint32_t *)(memory);
+
+		if (current == NULL) {
+			current = calloc(1, sizeof(struct _light_pcapng));
+			DCHECK_NULLP(current, return block_count);
+
+			if (*iter == NULL) {
+				*iter = current;
+			}
+		}
+		else {
+			current->next_block = calloc(1, sizeof(struct _light_pcapng));
+			DCHECK_NULLP(current->next_block, return block_count);
+
+			current = current->next_block;
+		}
+
+		current->block_type = *local_data++;
+		current->block_total_lenght = *local_data++;
+		DCHECK_INT(((current->block_total_lenght % 4) == 0), 0, light_stop);
+
+		switch (current->block_type)
+		{
+		case LIGHT_SECTION_HEADER_BLOCK:
+		{
+			DPRINT_HERE(LIGHT_SECTION_HEADER_BLOCK);
+			struct _light_section_header *shb = calloc(1, sizeof(struct _light_section_header));
+			struct _light_option *opt = NULL;
+			uint32_t version;
+			ssize_t local_offset;
+
+			shb->byteorder_magic = *local_data++;
+			// TODO check byte order.
+			version = *local_data++;
+			shb->major_version = version & 0xFFFF;
+			shb->minor_version = (version >> 16) & 0xFFFF;
+			shb->section_length = *((uint64_t*)local_data);
+			local_data += 2;
+
+			current->block_body = (uint32_t*)shb;
+			local_offset = (size_t)local_data - (size_t)memory;
+			opt = __parse_options((uint32_t **)&local_data, current->block_total_lenght - local_offset - sizeof(current->block_total_lenght));
+			current->options = opt;
+		}
+		break;
+
+		case LIGHT_INTERFACE_BLOCK:
+		{
+			DPRINT_HERE(LIGHT_INTERFACE_BLOCK);
+			struct _light_interface_description_block *idb = calloc(1, sizeof(struct _light_interface_description_block));
+			struct _light_option *opt = NULL;
+			uint32_t link_reserved = *local_data++;
+			ssize_t local_offset;
+
+			idb->link_type = link_reserved & 0xFFFF;
+			idb->reserved = (link_reserved >> 16) & 0xFFFF;
+			idb->snapshot_length = *local_data++;
+			current->block_body = (uint32_t*)idb;
+			local_offset = (size_t)local_data - (size_t)memory;
+			opt = __parse_options((uint32_t **)&local_data, current->block_total_lenght - local_offset - sizeof(current->block_total_lenght));
+			current->options = opt;
+		}
+		break;
+
+		case LIGHT_ENHANCED_PACKET_BLOCK:
+		{
+			DPRINT_HERE(LIGHT_ENHANCED_PACKET_BLOCK);
+			struct _light_enhanced_packet_block *epb = NULL;
+			struct _light_option *opt = NULL;
+			uint32_t interface_id = *local_data++;
+			uint32_t timestamp_high = *local_data++;
+			uint32_t timestamp_low = *local_data++;
+			uint32_t captured_packet_length = *local_data++;
+			uint32_t original_packet_length = *local_data++;
+			ssize_t local_offset;
+			uint32_t actual_len = 0;
+
+			PADD32(captured_packet_length, &actual_len);
+
+			epb = calloc(1, sizeof(struct _light_enhanced_packet_block) + actual_len);
+			epb->interface_id = interface_id;
+			epb->timestamp_high = timestamp_high;
+			epb->timestamp_low = timestamp_low;
+			epb->capture_packet_length = captured_packet_length;
+			epb->original_capture_length = original_packet_length;
+
+			memcpy(epb->packet_data, local_data, captured_packet_length); // Maybe actual_len?
+			local_data += actual_len / sizeof(uint32_t);
+			current->block_body = (uint32_t*)epb;
+			local_offset = (size_t)local_data - (size_t)memory;
+			opt = __parse_options((uint32_t **)&local_data, current->block_total_lenght - local_offset - sizeof(current->block_total_lenght));
+			current->options = opt;
+		}
+		break;
+
+		case LIGHT_SIMPLE_PACKET_BLOCK:
+		{
+			DPRINT_HERE(LIGHT_SIMPLE_PACKET_BLOCK);
+			struct _light_simple_packet_block *spb = NULL;
+			uint32_t original_packet_length = *local_data++;
+			uint32_t actual_len = current->block_total_lenght - 2 * sizeof(current->block_total_lenght) - sizeof(current->block_type) - sizeof(original_packet_length);
+
+			spb = calloc(1, sizeof(struct _light_enhanced_packet_block) + actual_len);
+			spb->original_packet_length = original_packet_length;
+
+			memcpy(spb->packet_data, local_data, actual_len);
+			local_data += actual_len / sizeof(uint32_t);
+			current->block_body = (uint32_t*)spb;
+			current->options = NULL; // No options defined by the standard for this block type.
+		}
+		break;
+
+		case LIGHT_CUSTOM_DATA_BLOCK:
+		{
+			DPRINT_HERE(LIGHT_CUSTOM_DATA_BLOCK);
+			struct _light_custom_nonstandard_block *cnb = NULL;
+			struct _light_option *opt = NULL;
+			uint32_t len = *local_data++;
+			uint32_t reserved0 = *local_data++;
+			uint32_t reserved1 = *local_data++;
+			ssize_t local_offset;
+			uint32_t actual_len = 0;
+
+			PADD32(len, &actual_len);
+			cnb = calloc(1, sizeof(struct _light_custom_nonstandard_block) + actual_len);
+			cnb->data_length = len;
+			cnb->reserved0 = reserved0;
+			cnb->reserved1 = reserved1;
+
+			memcpy(cnb->packet_data, local_data, len); // Maybe actual_len?
+			local_data += actual_len / sizeof(uint32_t);
+			current->block_body = (uint32_t*)cnb;
+			local_offset = (size_t)local_data - (size_t)memory;
+			opt = __parse_options((uint32_t **)&local_data, current->block_total_lenght - local_offset - sizeof(current->block_total_lenght));
+			current->options = opt;
+		}
+		break;
+
+		default: // Could not find registered block type. Copying data as RAW.
+		{
+			DPRINT_HERE(default);
+			uint32_t raw_size = current->block_total_lenght - 2 * sizeof(current->block_total_lenght) - sizeof(current->block_type);
+			if (raw_size > 0) {
+				current->block_body = calloc(raw_size, 1);
+				memcpy(current->block_body, local_data, raw_size);
+				local_data += raw_size / (sizeof(*local_data));
+			}
+			else {
+				current->block_body = NULL;
+			}
+		}
+		break;
+		}
+
+		// Compute offset and return new link.
+		// Block total length.
+		DCHECK_ASSERT((bytes_read = *local_data++), current->block_total_lenght, light_stop);
+
+		bytes_read = current->block_total_lenght;
+		remaining -= bytes_read;
+		memory += bytes_read / sizeof(*memory);
+		block_count++;
+	}
+
+	return block_count;
 }
 
 light_pcapng light_read_from_memory(const uint32_t *memory, size_t size)
@@ -259,7 +439,7 @@ static void __free_option(struct _light_option *option)
 	free(option);
 }
 
-void light_pcapng_release(light_pcapng pcapng)
+PCAPNG_ATTRIBUTE_DEPRECATED void light_pcapng_release_rec(light_pcapng pcapng)
 {
 	if (pcapng == NULL)
 		return;
@@ -272,6 +452,32 @@ void light_pcapng_release(light_pcapng pcapng)
 	free(pcapng);
 }
 
+void light_pcapng_release(light_pcapng pcapng)
+{
+	light_pcapng iter = pcapng;
+	uint32_t block_count = light_get_block_count(pcapng);
+	light_pcapng *block_pointers = calloc(block_count, sizeof(light_pcapng));
+	uint32_t i = 0;
+
+	while (iter != NULL) {
+		block_pointers[i] = iter;
+		i++;
+		iter = iter->next_block;
+		if (i % 1000 == 0)
+			printf("%s\twhile\t[%u / %u]\n", __FUNCTION__, i, 3582989);
+	}
+
+	for (i = 0; i < block_count; ++i) {
+		__free_option(block_pointers[i]->options);
+		free(block_pointers[i]->block_body);
+		free(block_pointers[i]);
+		if (i % 1000 == 0)
+			printf("%s\tfor\t[%u / %u]\n", __FUNCTION__, i, 3582989);
+	}
+
+	free(block_pointers[i]);
+}
+
 static int __option_count(struct _light_option *option)
 {
 	if (option == NULL)
@@ -280,13 +486,13 @@ static int __option_count(struct _light_option *option)
 	return 1 + __option_count(option->next_option);
 }
 
-char *light_pcapng_to_string(light_pcapng pcapng)
+char PCAPNG_ATTRIBUTE_DEPRECATED *light_pcapng_to_string_rec(light_pcapng pcapng)
 {
 	if (pcapng == NULL)
 		return NULL;
 
 	char *string;
-	char *next = light_pcapng_to_string(pcapng->next_block);
+	char *next = light_pcapng_to_string_rec(pcapng->next_block);
 	size_t buffer_size = 0;
 
 	if (next != NULL)
@@ -302,7 +508,34 @@ char *light_pcapng_to_string(light_pcapng pcapng)
 	return string;
 }
 
-uint32_t *light_pcapng_to_memory(const light_pcapng pcapng, size_t *size)
+PCAPNG_ATTRIBUTE_SLOW char *light_pcapng_to_string(light_pcapng pcapng)
+{
+	if (pcapng == NULL)
+		return NULL;
+
+	char *string = calloc(1, 1);
+	size_t buffer_size = 1; // NULL terminator
+	light_pcapng iter = pcapng;
+
+	while (iter != NULL) {
+		char *next = calloc(256, 1);
+
+		sprintf(next, "---\nType = 0x%X\nLength = %u\nData Pointer = %p\nOption count = %d\n---\n",
+				iter->block_type, iter->block_total_lenght, (void*)iter->block_body, __option_count(iter->options));
+
+		if (next != NULL)
+			buffer_size += strlen(next);
+
+		string = realloc(string, buffer_size);
+		strcat(string, next);
+		free(next);
+		iter = iter->next_block;
+	}
+
+	return string;
+}
+
+PCAPNG_ATTRIBUTE_DEPRECATED uint32_t *light_pcapng_to_memory(const light_pcapng pcapng, size_t *size)
 {
 	if (pcapng == NULL) {
 		*size = 0;
@@ -380,6 +613,7 @@ uint32_t light_get_block_count(const light_pcapng pcapng)
 
 	while (iterator != NULL) {
 		count++;
+		iterator = iterator->next_block;
 	}
 
 	return count;
@@ -390,6 +624,7 @@ light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index)
 	light_pcapng iterator = pcapng;
 	while (iterator != NULL && index != 0) {
 		index--;
+		iterator = iterator->next_block;
 	}
 
 	return iterator;
