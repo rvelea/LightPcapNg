@@ -349,9 +349,9 @@ uint32_t *light_pcapng_to_memory(const light_pcapng pcapng, size_t *size)
 
 		block_offset[0] = iterator->block_type;
 		block_offset[1] = iterator->block_total_lenght;
-		memcpy(&block_mem[2], iterator->block_body, body_length);
-		memcpy(&block_mem[2 + body_length / 4], option_mem, option_length);
-		block_mem[iterator->block_total_lenght / 4 - 1] = iterator->block_total_lenght;
+		memcpy(&block_offset[2], iterator->block_body, body_length);
+		memcpy(&block_offset[2 + body_length / 4], option_mem, option_length);
+		block_offset[iterator->block_total_lenght / 4 - 1] = iterator->block_total_lenght;
 
 		DCHECK_ASSERT(iterator->block_total_lenght, body_length + option_length + 3 * sizeof(uint32_t), light_stop);
 		block_offset += iterator->block_total_lenght / 4;
