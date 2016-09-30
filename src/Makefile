@@ -7,7 +7,7 @@ SOURCES = light_io.c light_pcapng.c light_pcapng_cont.c light_platform.c light_m
 OBJECTS = $(SOURCES:.c=.o)
 PRECOMPILED = $(HEADERS:.h=.gch)
 
-TESTS = tests/test_read.c tests/test_read_write.c tests/test_mem.c tests/test_histogram.c
+TESTS = tests/test_read.c tests/test_read_write.c tests/test_mem.c tests/test_histogram.c tests/test_subcapture.c
 TESTE = $(TESTS:.c=.test)
 
 LDFLAGS =

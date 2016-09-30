@@ -28,13 +28,29 @@
 #include "light_util.h"
 
 #include <stdlib.h>
+#include <string.h>
 
-PCAPNG_ATTRIBUTE_UNTESTED int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, int copy)
+light_option light_create_option(const uint16_t option_code, uint16_t option_length, void *option_value)
+{
+	uint16_t size = 0;
+	light_option option = calloc(1, sizeof(struct _light_option));
+
+	PADD32(option_length, &size);
+	option->custom_option_code = option_code;
+	option->option_length = option_length;
+
+	option->data = calloc(size, sizeof(uint8_t));
+	memcpy(option->data, option_value, option_length);
+
+	return option;
+}
+
+int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, light_boolean copy)
 {
 	size_t option_size = 0;
 	light_option option_list = NULL;
 
-	if (copy == 1) {
+	if (copy == LIGHT_TRUE) {
 		option_list = __copy_option(option);
 	}
 	else {
@@ -71,7 +87,7 @@ PCAPNG_ATTRIBUTE_UNTESTED int light_add_option(light_pcapng section, light_pcapn
 	return LIGHT_SUCCESS;
 }
 
-PCAPNG_ATTRIBUTE_UNTESTED int light_subcapture(const light_pcapng section, int (*predicate)(const light_pcapng), light_pcapng *subcapture)
+int light_subcapture(const light_pcapng section, light_boolean (*predicate)(const light_pcapng), light_pcapng *subcapture)
 {
 	if (__is_section_header(section) == 0) {
 		PCAPNG_ERROR("Invalid section header");
@@ -88,8 +104,8 @@ PCAPNG_ATTRIBUTE_UNTESTED int light_subcapture(const light_pcapng section, int (
 		if (!!predicate(next_block) == LIGHT_TRUE) {
 			iterator->next_block = __copy_block(next_block, LIGHT_FALSE);
 			iterator = iterator->next_block;
-			next_block = next_block->next_block;
 		}
+		next_block = next_block->next_block;
 	}
 
 	*subcapture = root;

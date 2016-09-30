@@ -77,8 +77,9 @@ void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(c
 int light_get_block_info(const light_pcapng pcapng, light_info info_flag, void *info_data, size_t *data_size);
 
 // Manipulation Functions
-int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, int copy);
-int light_subcapture(const light_pcapng section, int (*predicate)(const light_pcapng), light_pcapng *subcapture);
+light_option light_create_option(const uint16_t option_code, const uint16_t option_length, void *option_value);
+int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, light_boolean copy);
+int light_subcapture(const light_pcapng section, light_boolean (*predicate)(const light_pcapng), light_pcapng *subcapture);
 int light_iterate(const light_pcapng pcapng, light_boolean (*stop_fn)(const light_pcapng, void *), void *args);
 
 // Allocation and free functions

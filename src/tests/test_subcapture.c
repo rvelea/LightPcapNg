@@ -1,4 +1,4 @@
-// test_histogram.c
+// test_subcapture.c
 // Created on: Sep 30, 2016
 
 // Copyright (c) 2016 Radu Velea
@@ -23,36 +23,54 @@
 
 #include "light_pcapng.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-static uint32_t key_master(const light_pcapng pcapng)
+static light_boolean subcapture_predicate(const light_pcapng pcapng)
 {
 	uint32_t type = LIGHT_UNKNOWN_DATA_BLOCK;
+	uint32_t length = 0;
+
 	light_get_block_info(pcapng, LIGHT_INFO_TYPE, &type, NULL);
-	return type;
+	light_get_block_info(pcapng, LIGHT_INFO_LENGTH, &length, NULL);
+
+	return (type != LIGHT_ENHANCED_PACKET_BLOCK) || (length > 512);
 }
 
 int main(int argc, const char **args) {
 	int i;
+	char comment[] = "This pcapng file was created using LightPcapNg subcapture functionality.";
+	light_option option = light_create_option(0xB00B, strlen(comment), comment);
 
 	for (i = 1; i < argc; ++i) {
 		const char *file = args[i];
 		light_pcapng pcapng = light_read_from_path(file);
 		if (pcapng != NULL) {
-			light_pair *histogram;
-			size_t length = 0;
-			size_t uncounted = 0;
-			size_t i;
-			light_pcapng_historgram(pcapng, key_master, &histogram, &length, &uncounted);
+			light_pcapng subcapture = NULL;
+			uint32_t *subcapture_mem;
+			size_t subcapture_size;
+			FILE *subcapture_file;
+			char subcapture_name[PATH_MAX] = {0,};
+			const char *file_name = file;
+			char *offset;
 
-			printf("Histogram for %s: %zu classes, %zu items rejected. See <key, value> bellow:\n", file, length, uncounted);
-			for (i = 0; i < length; ++i) {
-				printf("<0x%8X, %12u>\n", histogram[i].key, histogram[i].val);
-			}
-			printf("\n");
+			while ((offset = strstr(file_name, "/")) != NULL)
+				file_name = offset + 1;
 
-			free(histogram);
+			light_subcapture(pcapng, subcapture_predicate, &subcapture);
+			light_add_option(subcapture, subcapture, option, LIGHT_TRUE);
+			subcapture_mem = light_pcapng_to_memory(subcapture, &subcapture_size);
+
+			sprintf(subcapture_name, "subcapture_%s", file_name);
+			printf("Write subcapture to %s\n", subcapture_name);
+			subcapture_file = fopen(subcapture_name, "wb");
+			fwrite(subcapture_mem, 1, subcapture_size, subcapture_file);
+			fclose(subcapture_file);
+
+			free(subcapture_mem);
+			light_pcapng_release(subcapture);
 			light_pcapng_release(pcapng);
 		}
 		else {
@@ -60,5 +78,6 @@ int main(int argc, const char **args) {
 		}
 	}
 
+	light_free_option(option);
 	return 0;
 }
