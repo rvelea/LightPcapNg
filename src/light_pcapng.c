@@ -294,7 +294,7 @@ void light_pcapng_release(light_pcapng pcapng)
 		free(block_pointers[i]);
 	}
 
-	free(block_pointers[i]);
+	free(block_pointers);
 }
 
 static int __option_count(struct _light_option *option)
@@ -477,4 +477,61 @@ size_t light_get_size(const light_pcapng pcapng)
 	}
 
 	return size;
+}
+
+int light_iterate(const light_pcapng pcapng, light_boolean (*stop_fn)(const light_pcapng, void *), void *args)
+{
+	int iterations = 0;
+	light_pcapng iterator = pcapng;
+
+	while (iterator != NULL) {
+		if (stop_fn(iterator, args) == LIGHT_FALSE) {
+			break;
+		}
+		iterations++;
+		iterator = iterator->next_block;
+	}
+
+	return iterations;
+}
+
+int light_get_block_info(const light_pcapng pcapng, light_info info_flag, void *info_data, size_t *data_size)
+{
+	if (pcapng == NULL || info_flag < 0 || info_flag > LIGHT_INFO_MAX) {
+		return LIGHT_INVALID_ARGUMENT;
+	}
+
+	switch (info_flag) {
+	case LIGHT_INFO_TYPE:
+	{
+		uint32_t *type = (uint32_t *)info_data;
+		if (type)
+			*type = pcapng->block_type;
+		if (data_size)
+			*data_size = sizeof(*type);
+		break;
+	}
+	case LIGHT_INFO_LENGTH:
+	{
+		uint32_t *length = (uint32_t *)info_data;
+		if (length)
+			*length = pcapng->block_total_lenght;
+		if (data_size)
+			*data_size = sizeof(*length);
+		break;
+	}
+	case LIGHT_INFO_BODY:
+	{
+		uint32_t **body = (uint32_t **)info_data;
+		if (body)
+			*body = pcapng->block_body;
+		if (data_size)
+			*data_size = sizeof(*body);
+		break;
+	}
+	default:
+		break;
+	}
+
+	return LIGHT_SUCCESS;
 }

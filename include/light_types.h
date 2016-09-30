@@ -30,4 +30,11 @@ typedef enum {
 //	LIGHT_MAYBE = 2,
 } light_boolean;
 
+typedef enum {
+	LIGHT_INFO_TYPE = 0,
+	LIGHT_INFO_LENGTH = 1,
+	LIGHT_INFO_BODY = 2,
+	LIGHT_INFO_MAX = 3,
+} light_info;
+
 #endif /* INCLUDE_LIGHT_TYPES_H_ */

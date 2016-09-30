@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 #include "light_special.h"
+#include "light_types.h"
 
 #define LIGHT_SECTION_HEADER_BLOCK  0x0A0D0D0A
 #define LIGHT_INTERFACE_BLOCK       0x00000001
@@ -47,6 +48,7 @@ extern "C" {
 #define LIGHT_SUCCESS           0
 #define LIGHT_INVALID_SECTION  -1
 #define LIGHT_OUT_OF_MEMORY    -2
+#define LIGHT_INVALID_ARGUMENT -3
 
 /////////////////////////////// STANDARD PCAPNG STRUCTURES & FUNCTIONS ///////////////////////////////
 
@@ -72,10 +74,12 @@ light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index);
 size_t light_get_size(const light_pcapng pcapng);
 void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
 		light_pair **hist, size_t *size, size_t *rejected);
+int light_get_block_info(const light_pcapng pcapng, light_info info_flag, void *info_data, size_t *data_size);
 
 // Manipulation Functions
 int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, int copy);
 int light_subcapture(const light_pcapng section, int (*predicate)(const light_pcapng), light_pcapng *subcapture);
+int light_iterate(const light_pcapng pcapng, light_boolean (*stop_fn)(const light_pcapng, void *), void *args);
 
 // Allocation and free functions
 light_option light_alloc_option(uint16_t option_length);
