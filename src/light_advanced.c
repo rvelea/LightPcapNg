@@ -56,8 +56,9 @@ int light_section_feature_extraction(const light_pcapng section, int (*extractor
 
 	extractor(section, *feature_vector, feature_vector_size);
 	iterator = section->next_block;
-	while (iterator != NULL && __is_section_header(section) != LIGHT_TRUE) {
+	while (iterator != NULL && __is_section_header(iterator) != LIGHT_TRUE) {
 		extractor(iterator, *feature_vector, feature_vector_size);
+		iterator = iterator->next_block;
 	}
 
 	return LIGHT_SUCCESS;

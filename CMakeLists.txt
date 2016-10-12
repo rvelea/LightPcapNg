@@ -49,3 +49,7 @@ add_executable (test_subcapture.test
     )
 target_link_libraries(test_subcapture.test light_pcapng_static)
 
+add_executable (test_feature.test
+    src/tests/test_feature.c
+    )
+target_link_libraries(test_feature.test light_pcapng_static)
