@@ -79,6 +79,7 @@ static int extractor(const light_pcapng packet, void *data, size_t feature_count
 	uint32_t type = LIGHT_UNKNOWN_DATA_BLOCK;
 	uint8_t protocol_version;
 	uint8_t ip_header_length;
+	uint16_t ethernet_type;
 	struct _light_enhanced_packet_block *epb;
 	uint8_t *octets;
 	int i;
@@ -111,7 +112,24 @@ static int extractor(const light_pcapng packet, void *data, size_t feature_count
 		printf("%x:", byte);
 	}
 	printf("\n");
+
+	ethernet_type = ntohs(*(uint16_t*)(octets));
 	octets += 2; // Skip rest of Ethernet header.
+
+	switch (ethernet_type) {
+	case 0x0800: // Internet Protocol v4
+	case 0x86DD: // Internet Protocol v6
+		break;
+	case 0x8100: // 802.1Q Virtual LAN
+		octets += 4;
+		break;
+	case 0x9100: // 802.1Q DoubleTag
+		octets += 6;
+		break;
+	default:
+		printf("Unhandled Ethernet type(len) 0x%X\n", ethernet_type);
+		return 0;
+	}
 
 	ip_header_length = (*octets) & 0b1111;
 	protocol_version = (*octets >> 4) & 0b1111;
@@ -122,6 +140,7 @@ static int extractor(const light_pcapng packet, void *data, size_t feature_count
 	}
 	else {
 		// TODO;
+		printf("Protocol version = %u\n", protocol_version);
 	}
 
 	printf("\n");
@@ -143,6 +162,7 @@ int main(int argc, const char **args) {
 				goto release;
 			}
 
+			// TODO: Print or handle features.
 release:
 			light_pcapng_release(pcapng);
 			free(features);

@@ -61,5 +61,5 @@ int light_pcapng_to_file(const char *file_name, const light_pcapng pcapng)
 	light_write(fd, data, size);
 	light_close(fd);
 	free(data);
-	return 0;
+	return LIGHT_SUCCESS;
 }

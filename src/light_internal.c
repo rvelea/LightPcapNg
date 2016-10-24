@@ -59,9 +59,13 @@ struct _light_pcapng *__copy_block(const struct _light_pcapng *pcapng, const lig
 
 	size_t body_length = pcapng->block_total_lenght - 2 * sizeof(pcapng->block_total_lenght) - sizeof(pcapng->block_type);
 	struct _light_pcapng *pcopy = calloc(1, sizeof(struct _light_pcapng));
+	size_t option_length = 0;
+
 	pcopy->block_type = pcapng->block_type;
 	pcopy->block_total_lenght = pcapng->block_total_lenght;
 	pcopy->options = __copy_option(pcapng->options);
+	option_length = __get_option_total_size(pcopy->options);
+	body_length -= option_length;
 
 	pcopy->block_body = calloc(body_length, 1);
 	memcpy(pcopy->block_body, pcapng->block_body, body_length);
@@ -74,6 +78,20 @@ struct _light_pcapng *__copy_block(const struct _light_pcapng *pcapng, const lig
 	}
 
 	return pcopy;
+}
+
+size_t __get_option_total_size(const struct _light_option *option)
+{
+	size_t size = 0;
+
+	while (option != NULL) {
+		uint16_t actual_length;
+		PADD32(option->option_length, &actual_length);
+		size += 4 + actual_length;
+		option = option->next_option;
+	}
+
+	return size;
 }
 
 PCAPNG_ATTRIBUTE_REFACTOR uint32_t *__get_option_size(const struct _light_option *option, size_t *size)
@@ -117,7 +135,7 @@ light_boolean __is_section_header(const struct _light_pcapng * section)
 	return LIGHT_FALSE;
 }
 
-int __validate_section(const struct _light_pcapng *section)
+int __validate_section(struct _light_pcapng *section)
 {
 	if (__is_section_header(section) != LIGHT_TRUE) {
 		return LIGHT_INVALID_SECTION;

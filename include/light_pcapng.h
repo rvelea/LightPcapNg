@@ -81,6 +81,7 @@ light_option light_create_option(const uint16_t option_code, const uint16_t opti
 int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, light_boolean copy);
 int light_subcapture(const light_pcapng section, light_boolean (*predicate)(const light_pcapng), light_pcapng *subcapture);
 int light_iterate(const light_pcapng pcapng, light_boolean (*stop_fn)(const light_pcapng, void *), void *args);
+int light_ip_flow(light_pcapng *sectionp, light_pcapng **flows, size_t *flow_count, size_t *dropped);
 
 // Allocation and free functions
 light_option light_alloc_option(uint16_t option_length);
