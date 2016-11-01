@@ -102,6 +102,47 @@ int light_add_option(light_pcapng section, light_pcapng pcapng, light_option opt
 	return LIGHT_SUCCESS;
 }
 
+int light_update_option(light_pcapng section, light_pcapng pcapng, light_option option)
+{
+	light_option iterator = pcapng->options;
+	uint16_t old_data_size, new_data_size;
+
+	while (iterator != NULL) {
+		if (iterator->custom_option_code == option->custom_option_code) {
+			break;
+		}
+		iterator = iterator->next_option;
+	}
+
+	if (iterator == NULL) {
+		return light_add_option(section, pcapng, option, LIGHT_TRUE);
+	}
+
+	if (iterator->option_length != option->option_length) {
+		PADD32(option->option_length, &new_data_size);
+		PADD32(iterator->option_length, &old_data_size);
+
+		int data_size_diff = (int)new_data_size - (int)old_data_size;
+		pcapng->block_total_lenght += data_size_diff;
+
+		if (__is_section_header(section) == 1) {
+			struct _light_section_header *shb = (struct _light_section_header *)section->block_body;
+			shb->section_length += data_size_diff;
+		}
+		else {
+			PCAPNG_WARNING("PCAPNG block is not section header!");
+		}
+
+		iterator->option_length = option->option_length;
+		free(iterator->data);
+		iterator->data = calloc(new_data_size, sizeof(uint8_t));
+	}
+
+	memcpy(iterator->data, option->data, iterator->option_length);
+
+	return LIGHT_SUCCESS;
+}
+
 int light_subcapture(const light_pcapng section, light_boolean (*predicate)(const light_pcapng), light_pcapng *subcapture)
 {
 	if (__is_section_header(section) == 0) {

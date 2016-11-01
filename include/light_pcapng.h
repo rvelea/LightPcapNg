@@ -40,7 +40,8 @@ extern "C" {
 #define LIGHT_UNKNOWN_DATA_BLOCK    0xDEADBEEF
 
 // Custom option codes.
-#define LIGHT_CUSTOM_OPTION_ADDRESS_INFO 0xADD4
+#define LIGHT_CUSTOM_OPTION_ADDRESS_INFO   0xADD4
+#define LIGHT_CUSTOM_OPTION_FEATURE_DOUBLE 0xD008
 
 #define BYTE_ORDER_MAGIC            0x1A2B3C4D
 
@@ -52,6 +53,7 @@ extern "C" {
 #define LIGHT_INVALID_SECTION  -1
 #define LIGHT_OUT_OF_MEMORY    -2
 #define LIGHT_INVALID_ARGUMENT -3
+#define LIGHT_NOT_FOUND        -4
 
 /////////////////////////////// STANDARD PCAPNG STRUCTURES & FUNCTIONS ///////////////////////////////
 
@@ -85,6 +87,7 @@ uint32_t *light_get_option_data(const light_option option);
 // Manipulation Functions
 light_option light_create_option(const uint16_t option_code, const uint16_t option_length, void *option_value);
 int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, light_boolean copy);
+int light_update_option(light_pcapng section, light_pcapng pcapng, light_option option);
 int light_subcapture(const light_pcapng section, light_boolean (*predicate)(const light_pcapng), light_pcapng *subcapture);
 int light_iterate(const light_pcapng pcapng, light_boolean (*stop_fn)(const light_pcapng, void *), void *args);
 int light_ip_flow(light_pcapng *sectionp, light_pcapng **flows, size_t *flow_count, size_t *dropped);
@@ -101,6 +104,7 @@ typedef enum {
 	LIGHT_FEATURE_BYTE = 1,
 	LIGHT_FEATURE_SHORT = 2,
 	LIGHT_FEATURE_FLOAT = 4,
+	LIGHT_FEATURE_DOUBLE = 5,
 } light_feature_t;
 int light_section_feature_extraction(const light_pcapng section, int (*extractor)(const light_pcapng, void *, size_t),
 		void **feature_vector, const size_t feature_vector_size, const light_feature_t type);

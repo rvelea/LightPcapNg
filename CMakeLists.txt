@@ -60,3 +60,8 @@ add_executable (test_flow.test
     src/tests/test_flow.c
     )
 target_link_libraries(test_flow.test light_pcapng_static)
+
+add_executable (test_feature_advanced.test
+    src/tests/test_feature_advanced.c
+    )
+target_link_libraries(test_feature_advanced.test light_pcapng_static)

@@ -48,6 +48,9 @@ int light_section_feature_extraction(const light_pcapng section, int (*extractor
 	case LIGHT_FEATURE_FLOAT:
 		*feature_vector = calloc(feature_vector_size, sizeof(float));
 		break;
+	case LIGHT_FEATURE_DOUBLE:
+		*feature_vector = calloc(feature_vector_size, sizeof(double));
+		break;
 	}
 
 	if (*feature_vector == NULL) {

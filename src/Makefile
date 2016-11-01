@@ -8,10 +8,10 @@ OBJECTS = $(SOURCES:.c=.o)
 PRECOMPILED = $(HEADERS:.h=.gch)
 
 TESTS = tests/test_read.c tests/test_read_write.c tests/test_mem.c tests/test_histogram.c tests/test_subcapture.c \
-	tests/test_feature.c tests/test_flow.c
+	tests/test_feature.c tests/test_flow.c tests/test_feature_advanced.c
 TESTE = $(TESTS:.c=.test)
 
-LDFLAGS =
+LDFLAGS = -ldl
 INCLUDES = -I$(ROOT_DIR)/include
 DEBUG = -g -p -ggdb -D_DEBUG
 CFLAGS = -Wall -O2 -fPIC -DUNIVERSAL -g
