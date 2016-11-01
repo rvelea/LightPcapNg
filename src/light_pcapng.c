@@ -529,6 +529,15 @@ int light_get_block_info(const light_pcapng pcapng, light_info info_flag, void *
 			*data_size = sizeof(*body);
 		break;
 	}
+	case LIGHT_INFO_OPTIONS:
+	{
+		light_option *body = (light_option *)info_data;
+		if (body)
+			*body = pcapng->options;
+		if (data_size)
+			*data_size = sizeof(*body);
+		break;
+	}
 	default:
 		break;
 	}

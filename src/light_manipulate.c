@@ -52,6 +52,10 @@ int light_add_option(light_pcapng section, light_pcapng pcapng, light_option opt
 	size_t option_size = 0;
 	light_option option_list = NULL;
 
+	if (option == NULL) {
+		return LIGHT_INVALID_ARGUMENT;
+	}
+
 	if (copy == LIGHT_TRUE) {
 		option_list = __copy_option(option);
 	}
@@ -59,7 +63,19 @@ int light_add_option(light_pcapng section, light_pcapng pcapng, light_option opt
 		option_list = option;
 	}
 
+	option_size = __get_option_total_size(option_list);
+
 	if (pcapng->options == NULL) {
+		light_option iterator = option_list;
+		while (iterator->next_option != NULL) {
+			iterator = iterator->next_option;
+		}
+
+		if (iterator->custom_option_code != 0) {
+			// Add terminator option.
+			iterator->next_option = calloc(1, sizeof(struct _light_option));
+			option_size += 2;
+		}
 		pcapng->options = option_list;
 	}
 	else {
@@ -72,9 +88,6 @@ int light_add_option(light_pcapng section, light_pcapng pcapng, light_option opt
 		current->next_option = option_list;
 		option_list->next_option = opt_endofopt;
 	}
-
-	uint32_t *tmp = __get_option_size(option, &option_size); // TODO: Make specialized functions.
-	free(tmp);
 
 	pcapng->block_total_lenght += option_size;
 
@@ -261,6 +274,39 @@ static flow_information_t *__find_flow(flow_information_t *start, const flow_add
 	return NULL;
 }
 
+static void __append_address_information(light_pcapng section, const flow_information_t *info)
+{
+	light_option flow_option;
+	uint8_t *option_data;
+	uint16_t option_length = 1;
+
+	if (info->version == 4) {
+		option_length += 2 * sizeof(info->address.source.ipv4);
+	}
+	else if (info->version == 6) {
+		option_length += 2 * sizeof(info->address.source.ipv6);
+	}
+
+	// Maybe I could use light_create_option instead of light_alloc_option.
+	flow_option = light_alloc_option(option_length);
+	flow_option->custom_option_code = LIGHT_CUSTOM_OPTION_ADDRESS_INFO;
+	option_data = (uint8_t *)flow_option->data;
+
+	memcpy(option_data, &info->version, sizeof(info->version));
+	option_data += sizeof(info->version);
+	if (info->version == 4) {
+		memcpy(option_data, &info->address.source.ipv4, sizeof(info->address.source.ipv4));
+		option_data += sizeof(info->address.source.ipv4);
+		memcpy(option_data, &info->address.destination.ipv4, sizeof(info->address.destination.ipv4));
+	}
+	else if (info->version == 6) {
+		memcpy(option_data, &info->address.source.ipv6, sizeof(info->address.source.ipv6));
+		option_data += sizeof(info->address.source.ipv6);
+		memcpy(option_data, &info->address.destination.ipv6, sizeof(info->address.destination.ipv6));
+	}
+	light_add_option(section, info->section, flow_option, LIGHT_FALSE);
+}
+
 int light_ip_flow(light_pcapng *sectionp, light_pcapng **flows, size_t *flow_count, size_t *dropped)
 {
 	light_pcapng section = *sectionp;
@@ -369,6 +415,7 @@ iterate:
 	while (iterator != NULL) {
 		(*flows)[index] = iterator->section;
 		__validate_section((*flows)[index]);
+		__append_address_information(iterator->section, iterator);
 		index++;
 		iterator = iterator->next;
 	}

@@ -3,7 +3,7 @@ INCLUDE = $(ROOT_DIR)/include
 HEADERS = $(INCLUDE)/light_pcapng.h $(INCLUDE)/light_special.h $(INCLUDE)/light_debug.h \
 	$(INCLUDE)/light_platform.h $(INCLUDE)/light_internal.h $(INCLUDE)/light_util.h $(INCLUDE)/light_types.h
 SOURCES = light_io.c light_pcapng.c light_pcapng_cont.c light_platform.c light_manipulate.c light_internal.c light_alloc.c \
-	light_advanced.c
+	light_advanced.c light_option.c
 OBJECTS = $(SOURCES:.c=.o)
 PRECOMPILED = $(HEADERS:.h=.gch)
 

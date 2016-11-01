@@ -25,15 +25,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, const char **args) {
 	int i;
 
 	for (i = 1; i < argc; ++i) {
 		const char *file = args[i];
+		char *core_file_name = strdup(file);
+		char *dot = strrchr(core_file_name, '.');
 		light_pcapng pcapng = light_read_from_path(file);
 		light_pcapng current_section = pcapng;
 		int flow_index = 0;
+
+		if (dot != NULL) {
+			*dot = 0;
+		}
 
 		while (current_section != NULL) {
 			light_pcapng *flows = NULL;
@@ -53,6 +60,7 @@ int main(int argc, const char **args) {
 				size_t block_count = light_get_block_count(current_flow);
 				uint32_t type = LIGHT_UNKNOWN_DATA_BLOCK;
 				char flow_file_name[256] = {0,};
+				light_option options = NULL;
 
 				light_get_block_info(pcapng, LIGHT_INFO_TYPE, &type, NULL);
 #if 0
@@ -62,7 +70,35 @@ int main(int argc, const char **args) {
 				(void)block_count;
 #endif
 
-				sprintf(flow_file_name, "%s_flow_%d.pcapng", file, flow_index);
+				light_get_block_info(current_flow, LIGHT_INFO_OPTIONS, &options, NULL);
+				while (options != NULL) {
+					if (light_get_option_code(options) == LIGHT_CUSTOM_OPTION_ADDRESS_INFO) {
+						break;
+					}
+					options = light_get_next_option(options);
+				}
+
+				if (options != NULL) {
+					uint8_t *label = (uint8_t *)light_get_option_data(options);
+					if (*label == 4) {
+						uint8_t source[4], destination[4];
+						memcpy(source, label + 1, sizeof(uint32_t));
+						memcpy(destination, label + 5, sizeof(uint32_t));
+						sprintf(flow_file_name, "%s_flow_[%d]_%u.%u.%u.%u-%u.%u.%u.%u.pcapng",
+								core_file_name, flow_index,
+								source[0], source[1], source[2], source[3],
+								destination[0], destination[1], destination[2], destination[3]);
+					}
+					else {
+						// TODO: handle IPv6 info.
+						printf("Protocol type = %u\n", *label);
+						sprintf(flow_file_name, "%s_flow_%d.pcapng", core_file_name, flow_index);
+					}
+				}
+				else {
+					sprintf(flow_file_name, "%s_flow_%d.pcapng", core_file_name, flow_index);
+				}
+
 				if (light_pcapng_to_file(flow_file_name, current_flow) != LIGHT_SUCCESS) {
 					fprintf(stderr, "Failed to write flow %d for %s\n", flow_index, file);
 				}
@@ -79,6 +115,8 @@ int main(int argc, const char **args) {
 		else {
 			fprintf(stderr, "Unable to read pcapng: %s\n", file);
 		}
+
+		free(core_file_name);
 	}
 
 	return 0;

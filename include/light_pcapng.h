@@ -39,6 +39,9 @@ extern "C" {
 #define LIGHT_CUSTOM_DATA_BLOCK     0xB16B00B5
 #define LIGHT_UNKNOWN_DATA_BLOCK    0xDEADBEEF
 
+// Custom option codes.
+#define LIGHT_CUSTOM_OPTION_ADDRESS_INFO 0xADD4
+
 #define BYTE_ORDER_MAGIC            0x1A2B3C4D
 
 #define LIGHT_KEY_REJECTED          0xFFFFFFFF
@@ -75,6 +78,9 @@ size_t light_get_size(const light_pcapng pcapng);
 void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
 		light_pair **hist, size_t *size, size_t *rejected);
 int light_get_block_info(const light_pcapng pcapng, light_info info_flag, void *info_data, size_t *data_size);
+uint16_t light_get_option_code(const light_option option);
+const light_option light_get_next_option(const light_option option);
+uint32_t *light_get_option_data(const light_option option);
 
 // Manipulation Functions
 light_option light_create_option(const uint16_t option_code, const uint16_t option_length, void *option_value);

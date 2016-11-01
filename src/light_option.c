@@ -1,5 +1,5 @@
-// light_types.h
-// Created on: Jul 23, 2016
+// light_option.c
+// Created on: Nov 1, 2016
 
 // Copyright (c) 2016 Radu Velea
 
@@ -21,21 +21,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef INCLUDE_LIGHT_TYPES_H_
-#define INCLUDE_LIGHT_TYPES_H_
+#include "light_pcapng.h"
 
-typedef enum {
-	LIGHT_FALSE = 0,
-	LIGHT_TRUE = 1,
-//	LIGHT_MAYBE = 2,
-} light_boolean;
+#include "light_debug.h"
+#include "light_internal.h"
 
-typedef enum {
-	LIGHT_INFO_TYPE = 0,
-	LIGHT_INFO_LENGTH = 1,
-	LIGHT_INFO_BODY = 2,
-	LIGHT_INFO_OPTIONS = 3,
-	LIGHT_INFO_MAX = 4,
-} light_info;
+uint16_t light_get_option_code(const light_option option)
+{
+	return option->custom_option_code;
+}
 
-#endif /* INCLUDE_LIGHT_TYPES_H_ */
+const light_option light_get_next_option(const light_option option)
+{
+	return option->next_option;
+}
+
+uint32_t *light_get_option_data(const light_option option)
+{
+	return option->data;
+}
+
