@@ -425,6 +425,11 @@ light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index)
 	return iterator;
 }
 
+light_pcapng light_next_block(const light_pcapng pcapng)
+{
+	return pcapng == NULL ? NULL : pcapng->next_block;
+}
+
 void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
 		light_pair **hist, size_t *size, size_t *rejected)
 {

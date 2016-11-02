@@ -39,9 +39,12 @@ extern "C" {
 #define LIGHT_CUSTOM_DATA_BLOCK     0xB16B00B5
 #define LIGHT_UNKNOWN_DATA_BLOCK    0xDEADBEEF
 
-// Custom option codes.
+// "Official" option codes
+#define LIGHT_OPTION_IF_TSRESOL            0x0009
+
+// Custom option codes
 #define LIGHT_CUSTOM_OPTION_ADDRESS_INFO   0xADD4
-#define LIGHT_CUSTOM_OPTION_FEATURE_DOUBLE 0xD008
+#define LIGHT_CUSTOM_OPTION_FEATURE_U64    0x0064
 
 #define BYTE_ORDER_MAGIC            0x1A2B3C4D
 
@@ -76,10 +79,12 @@ void light_pcapng_release(light_pcapng pcapng);
 char *light_pcapng_to_string(light_pcapng pcapng);
 uint32_t light_get_block_count(const light_pcapng pcapng);
 light_pcapng light_get_block(const light_pcapng pcapng, uint32_t index);
+light_pcapng light_next_block(const light_pcapng pcapng);
 size_t light_get_size(const light_pcapng pcapng);
 void light_pcapng_historgram(const light_pcapng pcapng, uint32_t (*key_master)(const light_pcapng),
 		light_pair **hist, size_t *size, size_t *rejected);
 int light_get_block_info(const light_pcapng pcapng, light_info info_flag, void *info_data, size_t *data_size);
+light_option light_get_option(const light_pcapng pcapng, uint16_t option_code);
 uint16_t light_get_option_code(const light_option option);
 const light_option light_get_next_option(const light_option option);
 uint32_t *light_get_option_data(const light_option option);

@@ -32,8 +32,9 @@
 
 #define MAX_FEATURES 64
 
-typedef double (*extractor_fn)(const light_pcapng);
+typedef uint64_t (*extractor_fn)(const light_pcapng);
 static extractor_fn features[MAX_FEATURES] = {0,};
+static char *feature_names[MAX_FEATURES] = {0,};
 static int feature_count = 0;
 static void *feature_lib_handle = NULL;
 
@@ -45,9 +46,9 @@ static int compile_features()
 
 static int extract_features()
 {
-	feature_lib_handle = dlopen("./features/libfeatures.so", RTLD_NOW);
+	feature_lib_handle = dlopen("./features/libfeatures.so", RTLD_LAZY);
 	if (!feature_lib_handle) {
-		dlerror();
+		fprintf(stderr, "dlerror: %s\n", dlerror());
 		return -1;
 	}
 
@@ -69,6 +70,7 @@ static int extract_features()
 		}
 		else {
 			features[feature_count] = function;
+			feature_names[feature_count] = strdup(line);
 			feature_count++;
 		}
 		memset(line, 0, sizeof(line));
@@ -79,8 +81,21 @@ static int extract_features()
 	return 0;
 }
 
+static void cleanup()
+{
+	int i;
+
+	for (i = 0; i < feature_count; ++i) {
+		free(feature_names[i]);
+	}
+
+	dlclose(feature_lib_handle);
+	feature_lib_handle = NULL;
+}
+
 int main(int argc, const char **args) {
 	int i, j;
+	FILE *features_csv = fopen("features/unscaled.csv", "w");
 
 	if (compile_features() != 0) {
 		fprintf(stderr, "Unable to compile features!\n");
@@ -92,22 +107,52 @@ int main(int argc, const char **args) {
 		return EXIT_FAILURE;
 	}
 
+	fprintf(features_csv, "address1, address2");
+	for (i = 0; i < feature_count; ++i) {
+		fprintf(features_csv, ", %s", feature_names[i]);
+	}
+	fprintf(features_csv, "\n");
+
 	printf("Running feature extraction with %d functions and %d traces\n", feature_count, argc - 1);
 
 	for (i = 1; i < argc; ++i) {
 		const char *file = args[i];
 		light_pcapng pcapng = light_read_from_path(file);
 		if (pcapng != NULL) {
-			double feature_values[MAX_FEATURES];
+			uint64_t feature_values[MAX_FEATURES];
 			light_option feature_option;
+			light_option address_option;
+
+			address_option = light_get_option(pcapng, LIGHT_CUSTOM_OPTION_ADDRESS_INFO);
+			if (address_option != NULL) {
+				uint8_t *label = (uint8_t *)light_get_option_data(address_option);
+				if (*label == 4) {
+					uint8_t source[4], destination[4];
+					memcpy(source, label + 1, sizeof(uint32_t));
+					memcpy(destination, label + 5, sizeof(uint32_t));
+					fprintf(features_csv, "%u.%u.%u.%u, %u.%u.%u.%u",
+							source[0], source[1], source[2], source[3],
+							destination[0], destination[1], destination[2], destination[3]);
+				}
+				else {
+					fprintf(features_csv, "unknown, unknown");
+				}
+			}
+			else {
+				fprintf(features_csv, "unknown, unknown");
+			}
 
 			printf("Extract features for %s\n", file);
 
+			// Write output to file.
 			for (j = 0; j < feature_count; ++j) {
 				feature_values[j] = features[j](pcapng);
+				fprintf(features_csv, ", %lu", feature_values[j]);
 			}
+			fprintf(features_csv, "\n");
 
-			feature_option = light_create_option(LIGHT_CUSTOM_OPTION_FEATURE_DOUBLE, feature_count * sizeof(double), feature_values);
+			// Update .pcapng traces with computed metrics.
+			feature_option = light_create_option(LIGHT_CUSTOM_OPTION_FEATURE_U64, feature_count * sizeof(uint64_t), feature_values);
 			light_update_option(pcapng, pcapng, feature_option);
 			light_pcapng_to_file(file, pcapng);
 
@@ -118,6 +163,9 @@ int main(int argc, const char **args) {
 			fprintf(stderr, "Unable to read pcapng: %s\n", file);
 		}
 	}
+
+	fclose(features_csv);
+	cleanup();
 
 	return EXIT_SUCCESS;
 }
