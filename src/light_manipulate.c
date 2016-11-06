@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef WIN32
 #include <arpa/inet.h>
+#endif
 
 light_option light_create_option(const uint16_t option_code, uint16_t option_length, void *option_value)
 {

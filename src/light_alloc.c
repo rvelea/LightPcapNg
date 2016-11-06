@@ -47,7 +47,7 @@ light_pcapng light_alloc_block(uint32_t block_body_lengh)
 {
 	struct _light_pcapng *pcapng_block = calloc(1, sizeof(struct _light_pcapng));
 	uint32_t actual_size = 0;
-	ssize_t block_body_size;
+	int32_t block_body_size;
 
 	PADD32(block_body_lengh, &actual_size);
 
