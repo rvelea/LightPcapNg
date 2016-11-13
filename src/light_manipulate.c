@@ -30,9 +30,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef WIN32
-#include <arpa/inet.h>
+
+#if BYTE_ORDER == BIG_ENDIAN
+
+#define LIGHT_HTONS(n) (n)
+#define LIGHT_NTOHS(n) (n)
+#define LIGHT_HTONL(n) (n)
+#define LIGHT_NTOHL(n) (n)
+
+#elif BYTE_ORDER == LITTLE_ENDIAN
+
+#define LIGHT_HTONS(n) (((((unsigned short)(n) & 0xFF)) << 8) | (((unsigned short)(n) & 0xFF00) >> 8))
+#define LIGHT_NTOHS(n) (((((unsigned short)(n) & 0xFF)) << 8) | (((unsigned short)(n) & 0xFF00) >> 8))
+
+#define LIGHT_HTONL(n) (((((unsigned long)(n) & 0xFF)) << 24) | \
+                  ((((unsigned long)(n) & 0xFF00)) << 8) | \
+                  ((((unsigned long)(n) & 0xFF0000)) >> 8) | \
+                  ((((unsigned long)(n) & 0xFF000000)) >> 24))
+
+#define LIGHT_NTOHL(n) (((((unsigned long)(n) & 0xFF)) << 24) | \
+                  ((((unsigned long)(n) & 0xFF00)) << 8) | \
+                  ((((unsigned long)(n) & 0xFF0000)) >> 8) | \
+                  ((((unsigned long)(n) & 0xFF000000)) >> 24))
+#else
+#error "Both BIG_ENDIAN or LITTLE_ENDIAN are not #defined"
 #endif
+
 
 light_option light_create_option(const uint16_t option_code, uint16_t option_length, void *option_value)
 {
@@ -76,7 +99,7 @@ int light_add_option(light_pcapng section, light_pcapng pcapng, light_option opt
 		if (iterator->custom_option_code != 0) {
 			// Add terminator option.
 			iterator->next_option = calloc(1, sizeof(struct _light_option));
-			option_size += 2;
+			option_size += 4;
 		}
 		pcapng->options = option_list;
 	}
@@ -97,7 +120,7 @@ int light_add_option(light_pcapng section, light_pcapng pcapng, light_option opt
 		struct _light_section_header *shb = (struct _light_section_header *)section->block_body;
 		shb->section_length += option_size;
 	}
-	else {
+	else if (section != NULL) {
 		PCAPNG_WARNING("PCAPNG block is not section header!");
 	}
 
@@ -142,6 +165,12 @@ int light_update_option(light_pcapng section, light_pcapng pcapng, light_option 
 
 	memcpy(iterator->data, option->data, iterator->option_length);
 
+	return LIGHT_SUCCESS;
+}
+
+int light_add_block(light_pcapng block, light_pcapng next_block)
+{
+	block->next_block = next_block;
 	return LIGHT_SUCCESS;
 }
 
@@ -217,18 +246,18 @@ static PCAPNG_ATTRIBUTE_UNTESTED void __extract_ipv6_address(const uint8_t *payl
 	int i;
 
 	for (i = 0; i < 16; i += 2) {
-		address->source.ipv6.words[i / 2] = ntohs(*(uint16_t*)(&address_offest[i]));
+		address->source.ipv6.words[i / 2] = LIGHT_NTOHS(*(uint16_t*)(&address_offest[i]));
 	}
 
 	address_offest += 16;
 	for (i = 0; i < 16; i += 2) {
-		address->destination.ipv6.words[i / 2] = ntohs(*(uint16_t*)(&address_offest[i]));
+		address->destination.ipv6.words[i / 2] = LIGHT_NTOHS(*(uint16_t*)(&address_offest[i]));
 	}
 }
 
 static light_boolean __get_ip_address(const uint8_t *payload, flow_address_t *address, uint8_t *protocol_version)
 {
-	uint16_t ethernet_type = ntohs(*(uint16_t*)(payload + 12));
+	uint16_t ethernet_type = LIGHT_NTOHS(*(uint16_t*)(payload + 12));
 	payload += 14; // MAC address is 6 bytes long. ==> 2 x 6 + 2
 
 	switch (ethernet_type) {

@@ -41,6 +41,10 @@ extern "C" {
 
 // "Official" option codes
 #define LIGHT_OPTION_IF_TSRESOL            0x0009
+#define LIGHT_OPTION_COMMENT               0x0001
+#define LIGHT_OPTION_SHB_HARDWARE          0x0002
+#define LIGHT_OPTION_SHB_OS                0x0003
+#define LIGHT_OPTION_SHB_USERAPPL          0x0004
 
 // Custom option codes
 #define LIGHT_CUSTOM_OPTION_ADDRESS_INFO   0xADD4
@@ -88,18 +92,20 @@ light_option light_get_option(const light_pcapng pcapng, uint16_t option_code);
 uint16_t light_get_option_code(const light_option option);
 const light_option light_get_next_option(const light_option option);
 uint32_t *light_get_option_data(const light_option option);
+uint16_t light_get_option_length(const light_option option);
 
 // Manipulation Functions
 light_option light_create_option(const uint16_t option_code, const uint16_t option_length, void *option_value);
 int light_add_option(light_pcapng section, light_pcapng pcapng, light_option option, light_boolean copy);
 int light_update_option(light_pcapng section, light_pcapng pcapng, light_option option);
+int light_add_block(light_pcapng block, light_pcapng next_block);
 int light_subcapture(const light_pcapng section, light_boolean (*predicate)(const light_pcapng), light_pcapng *subcapture);
 int light_iterate(const light_pcapng pcapng, light_boolean (*stop_fn)(const light_pcapng, void *), void *args);
 int light_ip_flow(light_pcapng *sectionp, light_pcapng **flows, size_t *flow_count, size_t *dropped);
 
 // Allocation and free functions
 light_option light_alloc_option(uint16_t option_length);
-light_pcapng light_alloc_block(uint32_t block_body_lengh);
+light_pcapng light_alloc_block(uint32_t block_type, const uint32_t *block_body, uint32_t block_body_length);
 void light_free_option(light_option option);
 void light_free_block(light_pcapng pcapng);
 

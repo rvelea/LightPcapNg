@@ -43,20 +43,26 @@ light_option light_alloc_option(uint16_t option_length)
 	return option;
 }
 
-light_pcapng light_alloc_block(uint32_t block_body_lengh)
+light_pcapng light_alloc_block(uint32_t block_type, const uint32_t *block_body, uint32_t block_body_length)
 {
 	struct _light_pcapng *pcapng_block = calloc(1, sizeof(struct _light_pcapng));
 	uint32_t actual_size = 0;
 	int32_t block_body_size;
 
-	PADD32(block_body_lengh, &actual_size);
+	pcapng_block->block_type = block_type;
+
+	PADD32(block_body_length, &actual_size);
 
 	pcapng_block->block_total_lenght = actual_size; // This value MUST be a multiple of 4.
 	block_body_size = actual_size - 2 * sizeof(pcapng_block->block_total_lenght) - sizeof(pcapng_block->block_type);
 
 	if (block_body_size > 0) {
 		pcapng_block->block_body = calloc(1, block_body_size);
+		memcpy(pcapng_block->block_body, block_body, block_body_size);
 	}
+
+	pcapng_block->next_block = NULL;
+	pcapng_block->options = NULL;
 
 	return pcapng_block;
 }

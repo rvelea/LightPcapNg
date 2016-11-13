@@ -59,3 +59,8 @@ uint32_t *light_get_option_data(const light_option option)
 	return option->data;
 }
 
+uint16_t light_get_option_length(const light_option option)
+{
+	return option->option_length;
+}
+
