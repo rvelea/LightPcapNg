@@ -65,3 +65,13 @@ add_executable (test_feature_advanced.test
     src/tests/test_feature_advanced.c
     )
 target_link_libraries(test_feature_advanced.test light_pcapng_static)
+
+add_executable (test_read_packets.test
+    src/tests/test_read_packets.c
+    )
+target_link_libraries(test_read_packets.test light_pcapng_static)
+
+add_executable (test_read_write_packets.test
+    src/tests/test_read_write_packets.c
+    )
+target_link_libraries(test_read_write_packets.test light_pcapng_static)

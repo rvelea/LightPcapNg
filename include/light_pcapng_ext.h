@@ -84,5 +84,8 @@ void light_write_packet(light_pcapng_t *pcapng, const light_packet_header *packe
 
 void light_pcapng_close(light_pcapng_t *pcapng);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIGHT_PCAPNG_EXT_H_ */
