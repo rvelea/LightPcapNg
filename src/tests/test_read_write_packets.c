@@ -94,13 +94,14 @@ int main(int argc, const char **args) {
 					break;
 
 				if (pkt_data != NULL) {
-					printf("packet #%d: orig_len=%d, cap_len=%d, iface_id=%d, data_link=%d, timestamp=%ull\n",
+					printf("packet #%d: orig_len=%d, cap_len=%d, iface_id=%d, data_link=%d, timestamp=%d.%06d\n",
 							index,
 							pkt_header.original_length,
 							pkt_header.captured_length,
 							pkt_header.interface_id,
 							pkt_header.data_link,
-							pkt_header.timestamp);
+							(int)pkt_header.timestamp.tv_sec,
+							(int)pkt_header.timestamp.tv_usec);
 
 					uint16_t comment_len = 15;
 					char comment[comment_len];

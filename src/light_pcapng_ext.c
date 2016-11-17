@@ -139,14 +139,41 @@ static void __release_file_info(light_pcapng_file_info *info)
 	free(info);
 }
 
+static double __power_of(int x, int y)
+{
+	int i;
+	double res = 1;
+
+	if (y < 0)
+		return 1 / __power_of(x, -y);
+
+	for (i = 0; i < y; i++)
+		res *= x;
+
+	return res;
+}
+
 static void __append_interface_block_to_file_info(const light_pcapng interface_block, light_pcapng_file_info* info)
 {
 	struct _light_interface_description_block* interface_desc_block;
+	light_option ts_resolution_option = NULL;
 
 	if (info->interface_block_count > MAX_SUPPORTED_INTERFACE_BLOCKS)
 		return;
 
 	light_get_block_info(interface_block, LIGHT_INFO_BODY, &interface_desc_block, NULL);
+
+	ts_resolution_option = light_get_option(interface_block, LIGHT_OPTION_IF_TSRESOL);
+	if (ts_resolution_option == NULL)
+		info->timestamp_resolution[info->interface_block_count] = __power_of(10,-6);
+	else
+	{
+		uint8_t* raw_ts_data = (uint8_t*)light_get_option_data(ts_resolution_option);
+		if (*raw_ts_data < 128)
+			info->timestamp_resolution[info->interface_block_count] = __power_of(10, (-1)*(*raw_ts_data));
+		else
+			info->timestamp_resolution[info->interface_block_count] = __power_of(2, (-1)*((*raw_ts_data)-128));
+	}
 
 	info->link_types[info->interface_block_count++] = interface_desc_block->link_type;
 }
@@ -315,7 +342,12 @@ int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header *packet_he
 		packet_header->interface_id = epb->interface_id;
 		packet_header->captured_length = epb->capture_packet_length;
 		packet_header->original_length = epb->original_capture_length;
-		packet_header->timestamp = (epb->timestamp_high << 32) + epb->timestamp_low;
+		uint64_t timestamp = epb->timestamp_high;
+		timestamp = timestamp << 32;
+		timestamp += epb->timestamp_low;
+		double timestamp_res = pcapng->file_info->timestamp_resolution[epb->interface_id];
+		packet_header->timestamp.tv_sec = timestamp * timestamp_res;
+		packet_header->timestamp.tv_usec = (timestamp - (packet_header->timestamp.tv_sec / timestamp_res))*timestamp_res*1000000;
 		if (epb->interface_id < pcapng->file_info->interface_block_count)
 			packet_header->data_link = pcapng->file_info->link_types[epb->interface_id];
 
@@ -331,7 +363,8 @@ int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header *packet_he
 		packet_header->interface_id = 0;
 		packet_header->captured_length = spb->original_packet_length;
 		packet_header->original_length = spb->original_packet_length;
-		packet_header->timestamp = 0;
+		packet_header->timestamp.tv_sec = 0;
+		packet_header->timestamp.tv_usec = 0;
 		if (pcapng->file_info->interface_block_count > 0)
 			packet_header->data_link = pcapng->file_info->link_types[0];
 
@@ -390,8 +423,9 @@ void light_write_packet(light_pcapng_t *pcapng, const light_packet_header *packe
 	memset(epb_memory, 0, option_size);
 	struct _light_enhanced_packet_block *epb = (struct _light_enhanced_packet_block *)epb_memory;
 	epb->interface_id = iface_id;
-	epb->timestamp_high = packet_header->timestamp >> 32;
-	epb->timestamp_low = packet_header->timestamp & 0xFFFFFFFF;
+	uint64_t timestamp_usec = packet_header->timestamp.tv_sec * 1000000 + packet_header->timestamp.tv_usec;
+	epb->timestamp_high = timestamp_usec >> 32;
+	epb->timestamp_low = timestamp_usec & 0xFFFFFFFF;
 	epb->capture_packet_length = packet_header->captured_length;
 	epb->original_capture_length = packet_header->original_length;
 

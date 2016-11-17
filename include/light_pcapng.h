@@ -45,6 +45,7 @@ extern "C" {
 #define LIGHT_OPTION_SHB_HARDWARE          0x0002
 #define LIGHT_OPTION_SHB_OS                0x0003
 #define LIGHT_OPTION_SHB_USERAPPL          0x0004
+#define LIGHT_OPTION_IF_TSRESOL            0x0009
 
 // Custom option codes
 #define LIGHT_CUSTOM_OPTION_ADDRESS_INFO   0xADD4

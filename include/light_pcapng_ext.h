@@ -32,6 +32,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 #ifndef NULL
 #define NULL   ((void *) 0)
@@ -44,7 +45,7 @@ typedef struct _light_pcapng_t light_pcapng_t;
 
 typedef struct _light_packet_header {
 	uint32_t interface_id;
-	uint64_t timestamp;
+	struct timeval timestamp;
 	uint32_t captured_length;
 	uint32_t original_length;
 	uint16_t data_link;
@@ -65,6 +66,8 @@ typedef struct _light_pcapng_file_info {
 	size_t user_app_desc_size;
 	size_t interface_block_count;
 	uint16_t link_types[MAX_SUPPORTED_INTERFACE_BLOCKS];
+	double timestamp_resolution[MAX_SUPPORTED_INTERFACE_BLOCKS];
+
 } light_pcapng_file_info;
 
 
