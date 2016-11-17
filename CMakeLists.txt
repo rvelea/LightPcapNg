@@ -12,6 +12,7 @@ add_library (light_pcapng SHARED
     src/light_alloc.c
     src/light_advanced.c
     src/light_option.c
+    src/light_pcapng_ext.c
     )
 
 add_library (light_pcapng_static STATIC
@@ -24,6 +25,7 @@ add_library (light_pcapng_static STATIC
     src/light_alloc.c
     src/light_advanced.c
     src/light_option.c
+    src/light_pcapng_ext.c
     )
 
 add_executable (test_read.test

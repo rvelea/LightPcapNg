@@ -47,7 +47,7 @@ int main(int argc, const char **args) {
 			int index = 1;
 
 			while (1) {
-				light_packet_header *pkt_header = NULL;
+				light_packet_header pkt_header;
 				const uint8_t *pkt_data = NULL;
 				int res = 0;
 
@@ -55,22 +55,20 @@ int main(int argc, const char **args) {
 				if (!res)
 					break;
 
-				if (pkt_header != NULL && pkt_data != NULL) {
+				if (pkt_data != NULL) {
 					printf("packet #%d: orig_len=%d, cap_len=%d, iface_id=%d, data_link=%d, timestamp=%ull",
 							index,
-							pkt_header->original_length,
-							pkt_header->captured_length,
-							pkt_header->interface_id,
-							pkt_header->data_link,
-							pkt_header->timestamp);
-					if (pkt_header->comment_length > 0)
-						printf(", comment=\"%s\"\n", pkt_header->comment);
+							pkt_header.original_length,
+							pkt_header.captured_length,
+							pkt_header.interface_id,
+							pkt_header.data_link,
+							pkt_header.timestamp);
+					if (pkt_header.comment_length > 0)
+						printf(", comment=\"%s\"\n", pkt_header.comment);
 					else
 						printf("\n");
 
 					index++;
-
-					free(pkt_header);
 				}
 			}
 

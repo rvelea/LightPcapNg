@@ -281,7 +281,7 @@ light_pcapng_file_info *light_pcang_get_file_info(light_pcapng_t *pcapng)
 	return pcapng->file_info;
 }
 
-int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header **packet_header, const uint8_t **packet_data)
+int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header *packet_header, const uint8_t **packet_data)
 {
 	uint32_t type = LIGHT_UNKNOWN_DATA_BLOCK;
 
@@ -301,7 +301,6 @@ int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header **packet_h
 		light_get_block_info(pcapng->pcapng_iter, LIGHT_INFO_TYPE, &type, NULL);
 	}
 
-	*packet_header = NULL;
 	*packet_data = NULL;
 
 	if (pcapng->pcapng_iter == NULL)
@@ -313,13 +312,12 @@ int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header **packet_h
 
 		light_get_block_info(pcapng->pcapng_iter, LIGHT_INFO_BODY, &epb, NULL);
 
-		*packet_header = calloc(1, sizeof(light_packet_header));
-		(*packet_header)->interface_id = epb->interface_id;
-		(*packet_header)->captured_length = epb->capture_packet_length;
-		(*packet_header)->original_length = epb->original_capture_length;
-		(*packet_header)->timestamp = (epb->timestamp_high << 32) + epb->timestamp_low;
+		packet_header->interface_id = epb->interface_id;
+		packet_header->captured_length = epb->capture_packet_length;
+		packet_header->original_length = epb->original_capture_length;
+		packet_header->timestamp = (epb->timestamp_high << 32) + epb->timestamp_low;
 		if (epb->interface_id < pcapng->file_info->interface_block_count)
-			(*packet_header)->data_link = pcapng->file_info->link_types[epb->interface_id];
+			packet_header->data_link = pcapng->file_info->link_types[epb->interface_id];
 
 		*packet_data = (uint8_t*)epb->packet_data;
 	}
@@ -330,25 +328,24 @@ int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header **packet_h
 
 		light_get_block_info(pcapng->pcapng_iter, LIGHT_INFO_BODY, &spb, NULL);
 
-		*packet_header = calloc(1, sizeof(light_packet_header));
-		(*packet_header)->interface_id = 0;
-		(*packet_header)->captured_length = spb->original_packet_length;
-		(*packet_header)->original_length = spb->original_packet_length;
-		(*packet_header)->timestamp = 0;
+		packet_header->interface_id = 0;
+		packet_header->captured_length = spb->original_packet_length;
+		packet_header->original_length = spb->original_packet_length;
+		packet_header->timestamp = 0;
 		if (pcapng->file_info->interface_block_count > 0)
-			(*packet_header)->data_link = pcapng->file_info->link_types[0];
+			packet_header->data_link = pcapng->file_info->link_types[0];
 
 		*packet_data = (uint8_t*)spb->packet_data;
 	}
 
-	(*packet_header)->comment = NULL;
-	(*packet_header)->comment_length = 0;
+	packet_header->comment = NULL;
+	packet_header->comment_length = 0;
 
 	light_option option = light_get_option(pcapng->pcapng_iter, 1); // get comment
 	if (option != NULL)
 	{
-		(*packet_header)->comment_length = light_get_option_length(option);
-		(*packet_header)->comment = (char*)light_get_option_data(option);
+		packet_header->comment_length = light_get_option_length(option);
+		packet_header->comment = (char*)light_get_option_data(option);
 	}
 
 	pcapng->pcapng_iter = light_next_block(pcapng->pcapng_iter);

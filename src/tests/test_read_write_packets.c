@@ -40,8 +40,8 @@ void copy_file(const char *src_path, const char *dst_path) {
 	} while ((n > 0) && (n == m));
 
 	fflush(dst_fd);
-    close(src_fd);
-    close(dst_fd);
+    fclose(src_fd);
+    fclose(dst_fd);
 }
 
 int main(int argc, const char **args) {
@@ -85,7 +85,7 @@ int main(int argc, const char **args) {
 			int index = 1;
 
 			while (1) {
-				light_packet_header *pkt_header = NULL;
+				light_packet_header pkt_header;
 				const uint8_t *pkt_data = NULL;
 				int res = 0;
 
@@ -93,27 +93,25 @@ int main(int argc, const char **args) {
 				if (!res)
 					break;
 
-				if (pkt_header != NULL && pkt_data != NULL) {
+				if (pkt_data != NULL) {
 					printf("packet #%d: orig_len=%d, cap_len=%d, iface_id=%d, data_link=%d, timestamp=%ull\n",
 							index,
-							pkt_header->original_length,
-							pkt_header->captured_length,
-							pkt_header->interface_id,
-							pkt_header->data_link,
-							pkt_header->timestamp);
+							pkt_header.original_length,
+							pkt_header.captured_length,
+							pkt_header.interface_id,
+							pkt_header.data_link,
+							pkt_header.timestamp);
 
 					uint16_t comment_len = 15;
 					char comment[comment_len];
 					sprintf(comment, "Packet #%d", index);
-					pkt_header->comment = comment;
-					pkt_header->comment_length = comment_len;
+					pkt_header.comment = comment;
+					pkt_header.comment_length = comment_len;
 
-					light_write_packet(pcapng_write, pkt_header, pkt_data);
-					light_write_packet(pcapng_append, pkt_header, pkt_data);
+					light_write_packet(pcapng_write, &pkt_header, pkt_data);
+					light_write_packet(pcapng_append, &pkt_header, pkt_data);
 
 					index++;
-
-					free(pkt_header);
 				}
 			}
 

@@ -78,7 +78,7 @@ light_pcapng_file_info *light_create_default_file_info();
 
 light_pcapng_file_info *light_pcang_get_file_info(light_pcapng_t *pcapng);
 
-int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header **packet_header, const uint8_t **packet_data);
+int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header *packet_header, const uint8_t **packet_data);
 
 void light_write_packet(light_pcapng_t *pcapng, const light_packet_header *packet_header, const uint8_t *packet_data);
 
