@@ -66,7 +66,7 @@ target_link_libraries(test_flow.test light_pcapng_static)
 add_executable (test_feature_advanced.test
     src/tests/test_feature_advanced.c
     )
-target_link_libraries(test_feature_advanced.test light_pcapng_static)
+target_link_libraries(test_feature_advanced.test light_pcapng_static dl)
 
 add_executable (test_read_packets.test
     src/tests/test_read_packets.c
