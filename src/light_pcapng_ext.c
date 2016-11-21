@@ -310,33 +310,33 @@ light_pcapng_file_info *light_create_file_info(const char *os_desc, const char *
 
 	if (os_desc != NULL && strlen(os_desc) > 0)
 	{
-		size_t os_len = strlen(os_desc)+1;
+		size_t os_len = strlen(os_desc);
 		info->os_desc = calloc(os_len, sizeof(char));
-		strcpy(info->os_desc, os_desc);
+		memcpy(info->os_desc, os_desc, os_len);
 		info->os_desc_size = os_len;
 	}
 
 	if (hardware_desc != NULL && strlen(hardware_desc) > 0)
 	{
-		size_t hw_len = strlen(hardware_desc)+1;
+		size_t hw_len = strlen(hardware_desc);
 		info->hardware_desc = calloc(hw_len, sizeof(char));
-		strcpy(info->hardware_desc, hardware_desc);
+		memcpy(info->hardware_desc, hardware_desc, hw_len);
 		info->hardware_desc_size = hw_len;
 	}
 
 	if (user_app_desc != NULL && strlen(user_app_desc) > 0)
 	{
-		size_t app_len = strlen(user_app_desc)+1;
+		size_t app_len = strlen(user_app_desc);
 		info->user_app_desc = calloc(app_len, sizeof(char));
-		strcpy(info->user_app_desc, user_app_desc);
+		memcpy(info->user_app_desc, user_app_desc, app_len);
 		info->user_app_desc_size = app_len;
 	}
 
 	if (file_comment != NULL && strlen(file_comment) > 0)
 	{
-		size_t comment_len = strlen(file_comment)+1;
+		size_t comment_len = strlen(file_comment);
 		info->file_comment = calloc(comment_len, sizeof(char));
-		strcpy(info->file_comment, file_comment);
+		memcpy(info->file_comment, file_comment, comment_len);
 		info->file_comment_size = comment_len;
 	}
 
