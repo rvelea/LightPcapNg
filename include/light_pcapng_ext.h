@@ -79,6 +79,8 @@ light_pcapng_t *light_pcapng_open_append(const char* file_path);
 
 light_pcapng_file_info *light_create_default_file_info();
 
+light_pcapng_file_info *light_create_file_info(const char *os_desc, const char *hardware_desc, const char *user_app_desc, const char *file_comment);
+
 light_pcapng_file_info *light_pcang_get_file_info(light_pcapng_t *pcapng);
 
 int light_get_next_packet(light_pcapng_t *pcapng, light_packet_header *packet_header, const uint8_t **packet_data);

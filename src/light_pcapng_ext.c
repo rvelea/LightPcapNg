@@ -233,26 +233,26 @@ light_pcapng_t *light_pcapng_open_write(const char* file_path, light_pcapng_file
 
 	if (file_info->file_comment_size > 0)
 	{
-		light_option file_comment_opt = light_create_option(LIGHT_OPTION_COMMENT, file_info->file_comment_size, file_info->file_comment);
-		light_add_option(pcapng->pcapng, pcapng->pcapng, file_comment_opt, LIGHT_FALSE);
+		light_option new_opt = light_create_option(LIGHT_OPTION_COMMENT, file_info->file_comment_size, file_info->file_comment);
+		light_add_option(pcapng->pcapng, pcapng->pcapng, new_opt, LIGHT_FALSE);
 	}
 
 	if (file_info->hardware_desc_size > 0)
 	{
-		light_option file_comment_opt = light_create_option(LIGHT_OPTION_SHB_HARDWARE, file_info->hardware_desc_size, file_info->hardware_desc);
-		light_add_option(pcapng->pcapng, pcapng->pcapng, file_comment_opt, LIGHT_FALSE);
+		light_option new_opt = light_create_option(LIGHT_OPTION_SHB_HARDWARE, file_info->hardware_desc_size, file_info->hardware_desc);
+		light_add_option(pcapng->pcapng, pcapng->pcapng, new_opt, LIGHT_FALSE);
 	}
 
 	if (file_info->os_desc_size > 0)
 	{
-		light_option file_comment_opt = light_create_option(LIGHT_OPTION_SHB_OS, file_info->os_desc_size, file_info->os_desc);
-		light_add_option(pcapng->pcapng, pcapng->pcapng, file_comment_opt, LIGHT_FALSE);
+		light_option new_opt = light_create_option(LIGHT_OPTION_SHB_OS, file_info->os_desc_size, file_info->os_desc);
+		light_add_option(pcapng->pcapng, pcapng->pcapng, new_opt, LIGHT_FALSE);
 	}
 
 	if (file_info->user_app_desc_size > 0)
 	{
-		light_option file_comment_opt = light_create_option(LIGHT_OPTION_SHB_USERAPPL, file_info->user_app_desc_size, file_info->user_app_desc);
-		light_add_option(pcapng->pcapng, pcapng->pcapng, file_comment_opt, LIGHT_FALSE);
+		light_option new_opt = light_create_option(LIGHT_OPTION_SHB_USERAPPL, file_info->user_app_desc_size, file_info->user_app_desc);
+		light_add_option(pcapng->pcapng, pcapng->pcapng, new_opt, LIGHT_FALSE);
 	}
 
 	pcapng->pcapng_iter = pcapng->pcapng;
@@ -302,6 +302,45 @@ light_pcapng_file_info *light_create_default_file_info()
 	memset(default_file_info, 0, sizeof(light_pcapng_file_info));
 	default_file_info->major_version = 1;
 	return default_file_info;
+}
+
+light_pcapng_file_info *light_create_file_info(const char *os_desc, const char *hardware_desc, const char *user_app_desc, const char *file_comment)
+{
+	light_pcapng_file_info *info = light_create_default_file_info();
+
+	if (os_desc != NULL && strlen(os_desc) > 0)
+	{
+		size_t os_len = strlen(os_desc)+1;
+		info->os_desc = calloc(os_len, sizeof(char));
+		strcpy(info->os_desc, os_desc);
+		info->os_desc_size = os_len;
+	}
+
+	if (hardware_desc != NULL && strlen(hardware_desc) > 0)
+	{
+		size_t hw_len = strlen(hardware_desc)+1;
+		info->hardware_desc = calloc(hw_len, sizeof(char));
+		strcpy(info->hardware_desc, hardware_desc);
+		info->hardware_desc_size = hw_len;
+	}
+
+	if (user_app_desc != NULL && strlen(user_app_desc) > 0)
+	{
+		size_t app_len = strlen(user_app_desc)+1;
+		info->user_app_desc = calloc(app_len, sizeof(char));
+		strcpy(info->user_app_desc, user_app_desc);
+		info->user_app_desc_size = app_len;
+	}
+
+	if (file_comment != NULL && strlen(file_comment) > 0)
+	{
+		size_t comment_len = strlen(file_comment)+1;
+		info->file_comment = calloc(comment_len, sizeof(char));
+		strcpy(info->file_comment, file_comment);
+		info->file_comment_size = comment_len;
+	}
+
+	return info;
 }
 
 light_pcapng_file_info *light_pcang_get_file_info(light_pcapng_t *pcapng)
