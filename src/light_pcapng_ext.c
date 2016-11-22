@@ -122,23 +122,6 @@ static light_pcapng_file_info *__create_file_info(light_pcapng pcapng_head)
 	return file_info;
 }
 
-static void __release_file_info(light_pcapng_file_info *info)
-{
-	if (info->user_app_desc != NULL)
-		free(info->user_app_desc);
-
-	if (info->file_comment != NULL)
-		free(info->file_comment);
-
-	if (info->hardware_desc != NULL)
-		free(info->hardware_desc);
-
-	if (info->os_desc != NULL)
-		free(info->os_desc);
-
-	free(info);
-}
-
 static double __power_of(int x, int y)
 {
 	int i;
@@ -343,6 +326,23 @@ light_pcapng_file_info *light_create_file_info(const char *os_desc, const char *
 	return info;
 }
 
+void light_free_file_info(light_pcapng_file_info *info)
+{
+	if (info->user_app_desc != NULL)
+		free(info->user_app_desc);
+
+	if (info->file_comment != NULL)
+		free(info->file_comment);
+
+	if (info->hardware_desc != NULL)
+		free(info->hardware_desc);
+
+	if (info->os_desc != NULL)
+		free(info->os_desc);
+
+	free(info);
+}
+
 light_pcapng_file_info *light_pcang_get_file_info(light_pcapng_t *pcapng)
 {
 	DCHECK_NULLP(pcapng, return NULL);
@@ -523,6 +523,6 @@ void light_pcapng_close(light_pcapng_t *pcapng)
 		light_flush(pcapng->file);
 		light_close(pcapng->file);
 	}
-	__release_file_info(pcapng->file_info);
+	light_free_file_info(pcapng->file_info);
 	free(pcapng);
 }
