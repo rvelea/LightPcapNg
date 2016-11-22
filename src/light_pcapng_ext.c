@@ -519,7 +519,10 @@ void light_pcapng_close(light_pcapng_t *pcapng)
 	DCHECK_NULLP(pcapng, return);
 	light_pcapng_release(pcapng->pcapng);
 	if (pcapng->file != NULL)
+	{
+		light_flush(pcapng->file);
 		light_close(pcapng->file);
+	}
 	__release_file_info(pcapng->file_info);
 	free(pcapng);
 }

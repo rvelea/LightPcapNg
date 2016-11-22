@@ -54,5 +54,6 @@ int light_read(__fd_t fd, void *buf, size_t count);
 int light_write(__fd_t fd, const void *buf, size_t count);
 size_t light_size(__fd_t fd);
 int light_close(__fd_t fd);
+int light_flush(__fd_t fd);
 
 #endif /* INCLUDE_LIGHT_PLATFORM_H_ */
