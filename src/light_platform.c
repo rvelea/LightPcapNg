@@ -77,6 +77,11 @@ int light_close(__fd_t fd)
 	return fclose(fd);
 }
 
+int light_flush(__fd_t fd)
+{
+	return fflush(fd);
+}
+
 #else
 
 #error UNIMPLEMENRTED

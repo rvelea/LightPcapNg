@@ -12,6 +12,7 @@ add_library (light_pcapng SHARED
     src/light_alloc.c
     src/light_advanced.c
     src/light_option.c
+    src/light_pcapng_ext.c
     )
 
 add_library (light_pcapng_static STATIC
@@ -24,6 +25,7 @@ add_library (light_pcapng_static STATIC
     src/light_alloc.c
     src/light_advanced.c
     src/light_option.c
+    src/light_pcapng_ext.c
     )
 
 add_executable (test_read.test
@@ -64,4 +66,14 @@ target_link_libraries(test_flow.test light_pcapng_static)
 add_executable (test_feature_advanced.test
     src/tests/test_feature_advanced.c
     )
-target_link_libraries(test_feature_advanced.test light_pcapng_static)
+target_link_libraries(test_feature_advanced.test light_pcapng_static dl)
+
+add_executable (test_read_packets.test
+    src/tests/test_read_packets.c
+    )
+target_link_libraries(test_read_packets.test light_pcapng_static)
+
+add_executable (test_read_write_packets.test
+    src/tests/test_read_write_packets.c
+    )
+target_link_libraries(test_read_write_packets.test light_pcapng_static)

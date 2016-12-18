@@ -60,6 +60,14 @@ extern "C" {
 		} \
 	} while (0)
 
+#define DCHECK_ASSERT_EXP(expression, err_message, other) do { \
+		if (!(expression)) {\
+			fprintf(stderr, "ERROR at %s::%s::%d: %s\n", \
+					__FILE__, __FUNCTION__, __LINE__, err_message); \
+			other; \
+		} \
+	} while (0)
+
 #define DCHECK_NULLP(x, other)	do { \
 		void *x_ret = (void *)(x); \
 		if (x_ret == NULL) { \

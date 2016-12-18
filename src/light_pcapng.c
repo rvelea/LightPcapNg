@@ -32,7 +32,7 @@
 
 // Documentation from: https://github.com/pcapng/pcapng
 
-static struct _light_option *__parse_options(uint32_t **memory, const ssize_t max_len)
+static struct _light_option *__parse_options(uint32_t **memory, const int32_t max_len)
 {
 	if (max_len <= 0) {
 		return NULL;
@@ -118,7 +118,7 @@ static size_t __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memo
 			struct _light_section_header *shb = calloc(1, sizeof(struct _light_section_header));
 			struct _light_option *opt = NULL;
 			uint32_t version;
-			ssize_t local_offset;
+			int32_t local_offset;
 
 			shb->byteorder_magic = *local_data++;
 			// TODO check byte order.
@@ -141,7 +141,7 @@ static size_t __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memo
 			struct _light_interface_description_block *idb = calloc(1, sizeof(struct _light_interface_description_block));
 			struct _light_option *opt = NULL;
 			uint32_t link_reserved = *local_data++;
-			ssize_t local_offset;
+			int32_t local_offset;
 
 			idb->link_type = link_reserved & 0xFFFF;
 			idb->reserved = (link_reserved >> 16) & 0xFFFF;
@@ -163,7 +163,7 @@ static size_t __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memo
 			uint32_t timestamp_low = *local_data++;
 			uint32_t captured_packet_length = *local_data++;
 			uint32_t original_packet_length = *local_data++;
-			ssize_t local_offset;
+			int32_t local_offset;
 			uint32_t actual_len = 0;
 
 			PADD32(captured_packet_length, &actual_len);
@@ -209,7 +209,7 @@ static size_t __parse_mem_copy(struct _light_pcapng **iter, const uint32_t *memo
 			uint32_t len = *local_data++;
 			uint32_t reserved0 = *local_data++;
 			uint32_t reserved1 = *local_data++;
-			ssize_t local_offset;
+			int32_t local_offset;
 			uint32_t actual_len = 0;
 
 			PADD32(len, &actual_len);
