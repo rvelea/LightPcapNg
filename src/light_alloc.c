@@ -27,6 +27,7 @@
 #include "light_util.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 light_option light_alloc_option(uint16_t option_length)
 {
@@ -75,8 +76,8 @@ void light_free_option(light_option option)
 
 void light_free_block(light_pcapng pcapng)
 {
-	free(pcapng);
 	free(pcapng->block_body);
+	free(pcapng);
 }
 
 

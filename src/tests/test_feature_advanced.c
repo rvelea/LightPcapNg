@@ -134,6 +134,9 @@ int main(int argc, const char **args) {
 							source[0], source[1], source[2], source[3],
 							destination[0], destination[1], destination[2], destination[3]);
 				}
+				else if (*label == 6) {
+					fprintf(features_csv, "ipv6, ipv6");
+				}
 				else {
 					fprintf(features_csv, "unknown, unknown");
 				}
