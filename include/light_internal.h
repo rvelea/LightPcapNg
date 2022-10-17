@@ -26,6 +26,7 @@
 
 #include "light_types.h"
 #include "light_platform.h"
+#include "light_debug.h"
 
 #include <stdint.h>
 
@@ -66,7 +67,7 @@ struct _light_pcapng_mem {
 struct _light_pcapng *__copy_block(const struct _light_pcapng *pcapng, const light_boolean recursive);
 struct _light_option *__copy_option(const struct _light_option *option);
 size_t __get_option_total_size(const struct _light_option *option);
-uint32_t *__get_option_size(const struct _light_option *option, size_t *size);
+PCAPNG_ATTRIBUTE_REFACTOR uint32_t *__get_option_size(const struct _light_option *option, size_t *size);
 light_boolean __is_section_header(const struct _light_pcapng *section);
 int __validate_section(struct _light_pcapng *section);
 
