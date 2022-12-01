@@ -54,7 +54,7 @@ light_pcapng light_alloc_block(uint32_t block_type, const uint32_t *block_body, 
 
 	PADD32(block_body_length, &actual_size);
 
-	pcapng_block->block_total_lenght = actual_size + 2 * sizeof(pcapng_block->block_total_lenght) - sizeof(pcapng_block->block_type); // This value MUST be a multiple of 4.
+	pcapng_block->block_total_lenght = actual_size + 2 * sizeof(pcapng_block->block_total_lenght) + sizeof(pcapng_block->block_type); // This value MUST be a multiple of 4.
 	block_body_size = actual_size;
 
 	if (block_body_size > 0) {
